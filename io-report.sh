@@ -189,11 +189,16 @@ function io_trait()
 	local disk="${2}"
 
 	local log="./io-report.log"
-	echo "IO trait report created by [https://github.com/innerr/io-report/blob/master/io-report.sh]" > "${log}"
+	echo "IO trait report created by [io-report.sh]" > "${log}"
 	echo "    host: `hostname`" >> "${log}"
 	echo "    file: ${file}" >> "${log}"
 	echo "    disk: ${disk}" >> "${log}"
 	echo "    date: `date +%D-%T`" >> "${log}"
+	echo "" >> "${log}"
+	echo "Get involved:" >> "${log}"
+	echo "    https://github.com/innerr/io-report" >> "${log}"
+	echo "Download io-report.sh" >> "${log}"
+	echo "    https://raw.githubusercontent.com/innerr/io-report/master/io-report.sh" >> "${log}"
 	echo "" >> "${log}"
 
 	echo "==> [basic io spec report]" >> "${log}"
