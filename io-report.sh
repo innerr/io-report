@@ -99,7 +99,8 @@ function _lat_collect()
 	local lines=$((run_sec * 3 + 10))
 	local run_time=$((run_sec + 2))
 	iostat -xdm "fake-dev-for-print-header" | grep 'Dev' | head -n 1
-	iostat -xdm 1 "${disk}" | head -n "${lines}" | grep "${disk}" | \
+	iostat -xdm 1 "${disk}" | head -n "${lines}" | grep --line-buffered -v "Linux" | \
+		grep --line-buffered -v '^$' | grep --line-buffered -v 'Device' |\
 		head -n "${run_time}" | tail -n "${run_sec}" | head -n 3
 }
 
@@ -150,7 +151,7 @@ function io_lat_report()
 	for ((; 1 == 1;)); do
 		echo "[w_bw_${bw_threads}t + w_iops_${iops_threads}t]"
 		_lat_workload "${run_sec}" "${file}" "${bw_threads}" "${bsk}" "write" "${fsize}" &
-		_lat_workload "${run_sec}" "${file}" "${io_threads}" "4" "write" "${fsize}" &
+		_lat_workload "${run_sec}" "${file}" "${iops_threads}" "4" "write" "${fsize}" &
 		_lat_collect "${run_sec}" "${disk}"
 		wait
 		local bw_threads=$((bw_threads / 2))
@@ -168,7 +169,7 @@ function io_lat_report()
 		echo "[w_bw_${bw_threads}t + w_iops_${iops_threads}t + r_iops_${iops_threads}t]"
 		_lat_workload "${run_sec}" "${file}" "${bw_threads}" "${bsk}" "write" "${fsize}" &
 		_lat_workload "${run_sec}" "${file}" "${bw_threads}" "${bsk}" "read" "${fsize}" &
-		_lat_workload "${run_sec}" "${file}" "${io_threads}" "4" "write" "${fsize}" &
+		_lat_workload "${run_sec}" "${file}" "${iops_threads}" "4" "write" "${fsize}" &
 		_lat_collect "${run_sec}" "${disk}"
 		wait
 		local bw_threads=$((bw_threads / 2))
@@ -181,14 +182,50 @@ function io_lat_report()
 }
 export -f io_lat_report
 
+## some tools
+
+function get_device()
+{
+	local fs=$(df -k "${1}" | tail -1)
+
+	local device=''
+	local last=''
+	local cached_mnt=''
+
+	local mnt=$(echo "${fs}" | awk '{ print $6 }')
+	if [ "${cached_mnt}" != "${mnt}" ]; then
+		local cached_mnt="${mnt}"
+
+		local mnts=$(mount)
+		local new_mnt="${mnt}"
+
+		while [ -n "${new_mnt}" ]; do
+			local new_mnt=$(echo "${mnts}" | grep " on ${mnt} " | awk '{ print $1 }')
+			[ "${new_mnt}" = "${mnt}" ] && break
+			if [ -n "${new_mnt}" ]; then
+				local device="${new_mnt}"
+				local mnt=$(df "${new_mnt}" 2> /dev/null | tail -1 | awk '{print $6 }')
+				[ "${mnt}" = "${device}" -o "${mnt}" = "${last}" ] && break
+				local last="${mnt}"
+			fi
+		done
+
+		local cached_device="${device}"
+	else
+		local device="${cached_device}"
+	fi
+
+	echo "${device}"
+}
+
 ## main entry
 
 function io_trait()
 {
 	local file="${1}"
-	local disk="${2}"
+	local disk=`get_device "${file}"`
 
-	local log="./io-report.log"
+	local log="./io-report.`hostname`.`basename ${disk}`.log"
 	echo "IO trait report created by [io-report.sh]" > "${log}"
 	echo "    host: `hostname`" >> "${log}"
 	echo "    file: ${file}" >> "${log}"
@@ -215,8 +252,8 @@ export -f io_trait
 ## user interface
 
 set -eu
-if [ -z "${2+x}" ]; then
-	echo "usage: <bin> test_file_path disk_name(device_name)" >&2
+if [ -z "${1+x}" ]; then
+	echo "usage: <bin> test_file_path" >&2
 	exit 1
 fi
-io_trait "${1}" "${2}"
+io_trait "${1}"
