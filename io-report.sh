@@ -219,10 +219,14 @@ function get_device()
 	echo "${device}"
 }
 
-function check_fio_installed()
+function check_all_installed()
 {
-	local email=`fio fio --help | grep 'axboe@kernel.dk'`
+	local email=`fio --help | grep 'axboe@kernel.dk'`
 	if [ -z "${email}" ]; then
+		return 1
+	fi
+	local usage=`iostat --help | grep 'Usage'`
+	if [ -z "${usage}" ]; then
 		return 1
 	fi
 }
@@ -240,7 +244,7 @@ function io_trait()
 
 	local disk=`get_device "${dir}"`
 
-	check_fio_installed
+	check_all_installed
 
 	local log="./io-report.`hostname`.`basename ${disk}`.log"
 	echo "IO trait report created by [io-report.sh]" > "${log}"
