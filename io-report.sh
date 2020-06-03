@@ -236,12 +236,15 @@ function check_all_installed()
 function io_trait()
 {
 	local file="${1}"
+
+	touch "${file}"
+	local file=`readlink -f "${file}"`
+
 	local dir=`dirname "${file}"`
 	if [ ! -d "${dir}" ]; then
 		echo "${dir} dir not exits" >&2
 		return 1
 	fi
-
 	local disk=`get_device "${dir}"`
 
 	check_all_installed
@@ -259,10 +262,10 @@ function io_trait()
 	echo "    https://raw.githubusercontent.com/innerr/io-report/master/io-report.sh" >> "${log}"
 	echo "" >> "${log}"
 
-	echo "==> [basic io spec report]" >> "${log}"
+	echo "==> [basic io spec report] (size=16G, runtime=30s)" >> "${log}"
 	io_report "${file}" "${file}.fio.tmp.log" "30" "16G" "8" >> "${log}"
 	echo "" >> "${log}"
-	echo "==> [cache detecting report]" >> "${log}"
+	echo "==> [cache detecting report] (size=500M, runtime=15s)" >> "${log}"
 	io_report "${file}" "${file}.fio.tmp.log" "15" "500M" "8" >> "${log}"
 	echo "" >> "${log}"
 	echo "==> [latency report]" >> "${log}"
