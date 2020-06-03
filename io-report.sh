@@ -231,10 +231,16 @@ function check_fio_installed()
 
 function io_trait()
 {
-	check_fio_installed
-
 	local file="${1}"
-	local disk=`get_device "${file}"`
+	local dir=`dirname "${file}"`
+	if [ ! -d "${dir}" ]; then
+		echo "${dir} dir not exits" >&2
+		return 1
+	fi
+
+	local disk=`get_device "${dir}"`
+
+	check_fio_installed
 
 	local log="./io-report.`hostname`.`basename ${disk}`.log"
 	echo "IO trait report created by [io-report.sh]" > "${log}"
