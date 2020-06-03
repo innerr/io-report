@@ -221,12 +221,14 @@ function get_device()
 
 function check_all_installed()
 {
-	local email=`fio --help 2>&1 | grep 'axboe@kernel.dk'`
-	if [ -z "${email}" ]; then
+	local info=`fio --help 2>&1 | grep 'Print version'`
+	if [ -z "${info}" ]; then
+		echo "fio is not installed" >&2
 		return 1
 	fi
 	local usage=`iostat --help 2>&1 | grep 'Usage'`
 	if [ -z "${usage}" ]; then
+		echo "iostat is not installed" >&2
 		return 1
 	fi
 }
