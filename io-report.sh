@@ -221,11 +221,11 @@ function get_device()
 
 function check_all_installed()
 {
-	local email=`fio --help | grep 'axboe@kernel.dk'`
+	local email=`fio --help 2>&1 | grep 'axboe@kernel.dk'`
 	if [ -z "${email}" ]; then
 		return 1
 	fi
-	local usage=`iostat --help | grep 'Usage'`
+	local usage=`iostat --help 2>&1 | grep 'Usage'`
 	if [ -z "${usage}" ]; then
 		return 1
 	fi
