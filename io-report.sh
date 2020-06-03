@@ -191,6 +191,7 @@ function get_device()
 	local device=''
 	local last=''
 	local cached_mnt=''
+	local cached_device=''
 
 	local mnt=$(echo "${fs}" | awk '{ print $6 }')
 	if [ "${cached_mnt}" != "${mnt}" ]; then
@@ -218,10 +219,20 @@ function get_device()
 	echo "${device}"
 }
 
+function check_fio_installed()
+{
+	local email=`fio fio --help | grep 'axboe@kernel.dk'`
+	if [ -z "${email}" ]; then
+		return 1
+	fi
+}
+
 ## main entry
 
 function io_trait()
 {
+	check_fio_installed
+
 	local file="${1}"
 	local disk=`get_device "${file}"`
 
